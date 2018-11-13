@@ -27,7 +27,7 @@ router.post('/', async (req, res) => {
     }
   });
 
-  try { movie = await movie.save(); }
+  try { await movie.save(); }
   catch (err) {
     res.status(400).send(err.message);
     return
