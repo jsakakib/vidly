@@ -19,13 +19,10 @@ router.post('/', async (req, res) => {
   if (!genre) return res.status(400).send('Invalid genre.');
 
   let movie = new Movie(_.omit(req.body, ['genreId']));
-  console.log(movie);
 
   movie.set({
     genre: _.pick(genre, ['_id', 'name'])
   });
-
-  console.log(movie);
 
   try {
     await movie.save();
