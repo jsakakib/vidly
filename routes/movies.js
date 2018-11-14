@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const { Movie, validate } = require('../models/movie');
 const { Genre } = require('../models/genre')
 const Joi = require('joi');
@@ -17,17 +18,19 @@ router.post('/', async (req, res) => {
   const genre = await Genre.findById(req.body.genreId);
   if (!genre) return res.status(400).send('Invalid genre.');
 
-  let movie = req.body;
-  delete movie.genreId;
-  movie = new Movie(movie);
+  let movie = new Movie(_.omit(req.body, ['genreId']));
+  console.log(movie);
+
   movie.set({
-    genre: {
-      _id: genre._id,
-      name: genre.name
-    }
+    genre: _.pick(genre, ['_id', 'name'])
   });
 
-  try { await movie.save(); }
+  console.log(movie);
+
+  try {
+    await movie.save();
+  }
+
   catch (err) {
     res.status(400).send(err.message);
     return
