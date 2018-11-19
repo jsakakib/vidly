@@ -1,3 +1,5 @@
+const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 const _ = require('lodash');
 const { Movie, validate } = require('../models/movie');
 const { Genre } = require('../models/genre')
@@ -11,7 +13,7 @@ router.get('/', async (req, res) => {
   res.send(movies);
 });
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   const { error } = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
 
@@ -24,14 +26,7 @@ router.post('/', async (req, res) => {
     genre: _.pick(genre, ['_id', 'name'])
   });
 
-  try {
-    await movie.save();
-  }
-
-  catch (err) {
-    res.status(400).send(err.message);
-    return
-  }
+  await movie.save();
 
   res.send(movie);
 });
@@ -49,7 +44,7 @@ router.put('/:id', async (req, res) => {
   res.send(movie);
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', [auth, admin], async (req, res) => {
   const movie = await Movie.findByIdAndRemove(req.params.id);
 
   if (!movie) return res.status(404).send('The movie with the given ID was not found.');

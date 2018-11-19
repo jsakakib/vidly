@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const express = require('express');
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   const genres = await Genre.find().sort('name');
   res.send(genres);
 });
@@ -15,14 +15,8 @@ router.post('/', auth, async (req, res) => {
   if (err) return res.status(400).send(err.details[0].message);
 
   let genre = new Genre(req.body);
-  try {
-    genre = await genre.save();
-  }
+  genre = await genre.save();
 
-  catch (err) {
-    res.status(400).send(err.errmsg);
-    return;
-  }
   res.send(genre);
 });
 
