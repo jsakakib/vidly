@@ -29,16 +29,26 @@ const Movie = mongoose.model('Movies', new mongoose.Schema({
     }
 }));
 
-function validateMovie(movie) {
+function validateMovie(req) {
     const schema = {
         title: Joi.string().min(5).max(255).required(),
         genreId: Joi.objectId().required(),
-        numberInStock: Joi.number().min(0).required(),
-        dailyRentalRate: Joi.number().min(0).required()
+        numberInStock: Joi.number().min(0).max(255).required(),
+        dailyRentalRate: Joi.number().min(0).max(255).required()
     };
 
-    return Joi.validate(movie, schema);
+    console.log('payload :', req.body);
+    const { error } = Joi.validate(req.body, schema);
+    let status;
+    let message;
+
+    if (error) {
+        message = error.details[0].message;
+        status = 400;
+        console.log(message, '\n');
+    }
+    return { message, status };
 }
 
 exports.Movie = Movie;
-exports.validate = validateMovie;
+exports.validateMovie = validateMovie;

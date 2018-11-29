@@ -1,7 +1,8 @@
+const validate = require('../middleware/validate');
+const validateObjectId = require('../middleware/validateObjectId');
 const auth = require('../middleware/auth');
-const { Rental, validate } = require('../models/rental');
+const { Rental, validateRental } = require('../models/rental');
 const { Movie } = require('../models/movie');
-const { Customer } = require('../models/customer');
 const mongoose = require('mongoose');
 const Fawn = require('fawn');
 const express = require('express');
@@ -14,11 +15,16 @@ router.get('/', async (req, res) => {
   res.send(rentals);
 });
 
-router.post('/', auth, async (req, res) => {
-  const { error } = validate(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
+router.get('/:id', [validate(validateObjectId)], async (req, res) => {
+  const rental = await Rental.findById(req.params.id);
 
-  const customer = await Customer.findById(req.body.customerId);
+  if (!rental) return res.status(404).send('The rental with the given ID was not found.');
+
+  res.send(rental);
+});
+
+router.post('/', [auth, validate(validateRental)], async (req, res) => {
+  const customer = await Movie.findById(req.body.customerId);
   if (!customer) return res.status(400).send('Invalid customer.');
 
   const movie = await Movie.findById(req.body.movieId);
@@ -42,9 +48,7 @@ router.post('/', auth, async (req, res) => {
   try {
     new Fawn.Task()
       .save('rentals', rental)
-      .update('movies', { _id: movie._id }, {
-        $inc: { numberInStock: -1 }
-      })
+      .update('movies', { _id: movie._id }, { $inc: { numberInStock: -1 } })
       .run();
 
     res.send(rental);
@@ -52,14 +56,6 @@ router.post('/', auth, async (req, res) => {
   catch (ex) {
     res.status(500).send('Something failed.');
   }
-});
-
-router.get('/:id', async (req, res) => {
-  const rental = await Rental.findById(req.params.id);
-
-  if (!rental) return res.status(404).send('The rental with the given ID was not found.');
-
-  res.send(rental);
 });
 
 module.exports = router; 

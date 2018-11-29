@@ -1,8 +1,13 @@
-const mongoose = require('mongoose');
+const Joi = require('joi');
 
-module.exports = function (req, res, next) {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id))
-        return res.status(404).send('Invalid ID.');
-
-    next();
+module.exports = function (req) {
+    const schema = { id: Joi.objectId() };
+    const { error } = Joi.validate(req.params, schema);
+    let status;
+    let message;
+    if (error) {
+        message = error.details[0].message;
+        status = 404;
+    }
+    return { message, status };
 }

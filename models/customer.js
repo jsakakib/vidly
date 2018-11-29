@@ -20,15 +20,22 @@ const Customer = mongoose.model('Customer', new mongoose.Schema({
     }
 }));
 
-function validateCustomer(customer) {
+function validateCustomer(req) {
     const schema = {
         name: Joi.string().min(5).max(50).required(),
         isGold: Joi.boolean(),
         phone: Joi.string().min(5).max(50).required()
     };
 
-    return Joi.validate(customer, schema);
+    const { error } = Joi.validate(req.body, schema);
+    let status;
+    let message;
+    if (error) {
+        message = error.details[0].message;
+        status = 400;
+    }
+    return { message, status };
 }
 
-exports.Movie = Customer;
-exports.validate = validateCustomer;
+exports.Customer = Customer;
+exports.validateCustomer = validateCustomer;

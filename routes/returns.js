@@ -29,8 +29,14 @@ function validateReturn(req) {
         customerId: Joi.objectId().required(),
         movieId: Joi.objectId().required()
     };
-
-    return Joi.validate(req, schema);
+    const { error } = Joi.validate(req.body, schema);
+    let status;
+    let message;
+    if (error) {
+        message = error.details[0].message;
+        status = 400;
+    }
+    return { message, status };
 }
 
 module.exports = router;
