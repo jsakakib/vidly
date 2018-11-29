@@ -3,6 +3,7 @@ const validateObjectId = require('../middleware/validateObjectId');
 const auth = require('../middleware/auth');
 const { Rental, validateRental } = require('../models/rental');
 const { Movie } = require('../models/movie');
+const { Customer } = require('../models/customer');
 const mongoose = require('mongoose');
 const Fawn = require('fawn');
 const express = require('express');
@@ -24,7 +25,7 @@ router.get('/:id', [validate(validateObjectId)], async (req, res) => {
 });
 
 router.post('/', [auth, validate(validateRental)], async (req, res) => {
-  const customer = await Movie.findById(req.body.customerId);
+  const customer = await Customer.findById(req.body.customerId);
   if (!customer) return res.status(400).send('Invalid customer.');
 
   const movie = await Movie.findById(req.body.movieId);
@@ -32,7 +33,7 @@ router.post('/', [auth, validate(validateRental)], async (req, res) => {
 
   if (movie.numberInStock === 0) return res.status(400).send('Movie not in stock.');
 
-  let rental = new Rental({
+  const rental = new Rental({
     customer: {
       _id: customer._id,
       name: customer.name,
@@ -46,11 +47,10 @@ router.post('/', [auth, validate(validateRental)], async (req, res) => {
   });
 
   try {
-    new Fawn.Task()
+    await new Fawn.Task()
       .save('rentals', rental)
       .update('movies', { _id: movie._id }, { $inc: { numberInStock: -1 } })
       .run();
-
     res.send(rental);
   }
   catch (ex) {

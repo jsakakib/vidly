@@ -37,7 +37,6 @@ function validateMovie(req) {
         dailyRentalRate: Joi.number().min(0).max(255).required()
     };
 
-    console.log('payload :', req.body);
     const { error } = Joi.validate(req.body, schema);
     let status;
     let message;
@@ -45,7 +44,6 @@ function validateMovie(req) {
     if (error) {
         message = error.details[0].message;
         status = 400;
-        console.log(message, '\n');
     }
     return { message, status };
 }
