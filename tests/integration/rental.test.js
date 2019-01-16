@@ -9,7 +9,7 @@ const { User } = require('../../models/user');
 
 describe('/api/rentals', () => {
 
-    beforeEach(async () => {
+    beforeEach(() => {
         server = require('../../index');
     });
 

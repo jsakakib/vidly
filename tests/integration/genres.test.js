@@ -4,22 +4,25 @@ const { Genre } = require('../../models/genre');
 const { User } = require('../../models/user');
 const mongoose = require('mongoose');
 
-let server;
 
 describe('/api/genres', () => {
+    let server;
+
     beforeEach(() => {
         server = require('../../index');
     });
 
     afterEach(async () => {
-        await Genre.remove({});
+        await Genre.deleteMany({});
         await server.close();
     });
 
     describe('GET /', () => {
         it('should return all genres', async () => {
+            const name = 'genre1';
+            const genre = { name };
             await Genre.insertMany([
-                { name: 'genre1' },
+                genre,
                 { name: 'genre2' }
             ]);
 
@@ -27,26 +30,13 @@ describe('/api/genres', () => {
             const genres = await Genre.find({});
 
             expect(res.status).toBe(200);
-            let genre;
             for (let i in genres) {
-                genre = genres[i].toObject();
-                genre._id = res.body[i]._id;
-                expect(res.body[i]).toMatchObject(genre);
+                expect(res.body[i]._id).toEqual(genres[i]._id.toHexString());
             };
         });
     });
 
     describe('GET /:id', () => {
-        it('should return a genre if valid id is passed', async () => {
-            const genre = new Genre({ name: 'genre1' });
-            await genre.save();
-
-            const res = await request(server).get('/api/genres/' + genre.id);
-
-            expect(res.status).toBe(200);
-            expect(res.body).toHaveProperty('name', genre.name);
-        });
-
         it('should return 404 if invalid id is passed', async () => {
             const res = await request(server).get('/api/genres/1');
 
@@ -59,13 +49,22 @@ describe('/api/genres', () => {
 
             expect(res.status).toBe(404);
         });
+
+        it('should return a genre if valid id is passed', async () => {
+            const name = 'genre1';
+            let genre = { name };
+            genre = new Genre(genre);
+            await genre.save();
+
+            const res = await request(server).get('/api/genres/' + genre.id);
+
+            expect(res.status).toBe(200);
+            expect(res.body._id).toEqual(genre._id.toHexString());
+            expect(Object.keys(res.body)).toMatchObject(Object.keys(genre.toObject()));
+        });
     });
 
     describe('POST /', () => {
-
-        // Define the happy path, and then in each test, we change
-        // one parameter tht clearly aligns with the name of the
-        // test.
         let token;
         let name;
 
@@ -100,15 +99,16 @@ describe('/api/genres', () => {
         });
 
         it('should save the genre if it is valid', async () => {
-            await exec();
-            const genre = await Genre.find({ name });
+            const res = await exec();
+            const genre = await Genre.findById(res.body._id);
             expect(genre).not.toBeNull();
         });
 
         it('should return the genre if it is valid', async () => {
             const res = await exec();
-            expect(res.body).toHaveProperty('_id');
-            expect(res.body).toHaveProperty('name', 'genre1');
+            const genre = await Genre.findById(res.body._id);
+            expect(res.body._id).toEqual(genre._id.toHexString());
+            expect(Object.keys(res.body)).toMatchObject(Object.keys(genre.toObject()));
         });
     });
 
@@ -126,9 +126,9 @@ describe('/api/genres', () => {
         }
 
         beforeEach(async () => {
-            // Before each test we need to create a genre and 
-            // put it in the database.      
-            genre = new Genre({ name: 'genre1' });
+            name = 'genre1';
+            genre = { name };
+            genre = new Genre(genre);
             await genre.save();
 
             token = new User().generateAuthToken();
